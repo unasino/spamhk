@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enviar Correo Electrónico</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #1a1a1a;
+      color: #00ff00;
+      margin: 0;
+      overflow: hidden;
+    }
+    .container {
+      margin-top: 50px;
+    }
+    .card {
+      width: 100%;
+      max-width: 600px;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+      background: #000;
+      color: #00ff00;
+      animation: flicker 1.5s infinite;
+    }
+    .card-header {
+      border-bottom: 1px solid #00ff00;
+    }
+    .btn-primary {
+      background-color: #00ff00;
+      border: none;
+      color: #000;
+      font-weight: bold;
+    }
+    .btn-primary:hover {
+      background-color: #00cc00;
+    }
+    .alert {
+      margin-top: 10px;
+      animation: fadeIn 1s;
+    }
+    @keyframes flicker {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title text-center">Configuración </h4>
+        </div>
+        <div class="card-body">
+          <form id="config-form">
+            <div class="form-group">
+              <label for="public-key">Public Key</label>
+              <input type="text" class="form-control" id="public-key" placeholder="Ingrese su Public Key" required>
+            </div>
+            <div class="form-group">
+              <label for="service-id">Service ID</label>
+              <input type="text" class="form-control" id="service-id" placeholder="Ingrese su Service ID" required>
+            </div>
+            <div class="form-group">
+              <label for="template-id">Template ID</label>
+              <input type="text" class="form-control" id="template-id" placeholder="Ingrese su Template ID" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Guardar Configuración</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title text-center">S P A M - correos</h4>
+        </div>
+        <div class="card-body">
+          <form id="email-form" onsubmit="sendEmails(event)">
+            <div class="form-group">
+              <label for="emails">Correos Electrónicos (separados por comas)</label>
+              <textarea class="form-control" id="emails" rows="5" placeholder="Ingrese los correos electrónicos"></textarea>
+            </div>
+            <div class="form-group">
+              <button type="submit" class="btn btn-primary btn-block">Iniciar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script type="text/javascript">
+    let publicKey = '';
+    let serviceId = '';
+    let templateId = '';
+
+    document.getElementById('config-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        publicKey = document.getElementById('public-key').value.trim();
+        serviceId = document.getElementById('service-id').value.trim();
+        templateId = document.getElementById('template-id').value.trim();
+        emailjs.init(publicKey);
+        showAlert('Configuración guardada con éxito!', 'success');
+    });
+
+    async function sendEmails(event) {
+        event.preventDefault();
+        if (!publicKey || !serviceId || !templateId) {
+            showAlert('Primero debe configurar las credenciales de EmailJS.', 'danger');
+            return;
+        }
+
+        const emails = document.getElementById('emails').value.split(',').map(email => email.trim());
+        for (const email of emails) {
+            try {
+                await emailjs.send(serviceId, templateId, {
+                    to_email: email,
+                    to_name: email, 
+                    from_name: 'premium', 
+                    reply_to: 'premium@superior.com' 
+                });
+                console.log(`Correo enviado a ${email} con éxito!`);
+                showAlert(`Correo enviado a ${email} con éxito!`, 'success');
+            } catch (error) {
+                console.error(`Error al enviar correo a ${email}:`, error);
+                showAlert(`Error al enviar correo a ${email}: ${error}`, 'danger');
+            }
+            await sleep(1000); // Pausa de 1 segundo entre cada correo
+        }
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.classList.add('alert', `alert-${type}`);
+        alertDiv.textContent = message;
+        document.querySelector('.card-body').appendChild(alertDiv);
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+</script>
+
+</body>
+</html>
